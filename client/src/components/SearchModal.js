@@ -1,130 +1,187 @@
 import React, { useState } from 'react'
 import { Box } from "@mui/system";
-import { Button, Grid, Typography, TextField, Modal, Paper, List, ListItem, ListItemText, Divider } from "@mui/material";
+import { Button, Grid, Typography, TextField, Modal } from "@mui/material";
 import { searchTextApi } from '../utils/api.js'
-import { styled } from "@mui/material/styles";
-
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  maxHeight: '80vh',
-  overflowY: 'auto',
-  backgroundColor: '#D7D3BF',
-  boxShadow: theme.shadows[5],
-  padding: theme.spacing(4),
-  outline: 'none',
-  borderRadius: theme.shape.borderRadius,
-}));
-
-const StyledTextField = styled(TextField)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
-  '& .MuiOutlinedInput-root': {
-    '&:hover fieldset': {
-      borderColor: theme.palette.primary.main,
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: theme.palette.primary.main,
-    },
-  },
-}));
 
 export const SearchModal = ({ open, handleClose, convData, isAgent, setSelectedConvo }) => {
-  const [searchText, setSearchText] = useState("");
-  const [chatResults, setChatResults] = useState([]);
-  const [messageResults, setMessageResults] = useState([]);
-  const [showResults, setShowResults] = useState(false);
+    const [searchText, setSearchText] = useState("");
+    const [chatResults, setChatResults] = useState([]);
+    const [messageResults, setMessageResults] = useState([]);
+    const [showResults, setShowResults] = useState(false);
 
-  const handleSearch = async () => {
-    // ... (keep the existing logic)
-  }
+    const handleSearch = async () => {
+        setChatResults([])
+        setMessageResults([])
+        var res = convData.filter(obj => Object.values(obj).some(val => val.toString().toLowerCase().includes(searchText.toLowerCase())));
 
-  return (
-    <Modal
-      open={open}
-      onClose={handleClose}
-      aria-labelledby="search-modal"
-      aria-describedby="search-conversations-and-messages"
-    >
-      <StyledPaper>
-        <Typography id="search-modal" variant="h6" component="h2" gutterBottom>
-          Search
-        </Typography>
-        <Box display="flex" alignItems="center" mb={2}>
-          <StyledTextField
-            fullWidth
-            label="Search"
-            variant="outlined"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSearch}
-            sx={{ ml: 1 }}
-          >
-            Search
-          </Button>
-        </Box>
+        const apiRes = await searchTextApi({ searchText: searchText })
+        console.log(apiRes)
 
-        {showResults && (
-          <Box>
-            <Typography variant="subtitle1" gutterBottom>
-              Chat Results
+        if (apiRes && apiRes.length !== 0) {
+            setMessageResults(apiRes)
+        }
+        setChatResults(res)
+        setShowResults(true)
+    }
+
+    return (
+      <>
+        <Modal
+          open={open}
+          onClose={handleClose}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Box sx={style}>
+            <Typography id="modal-modal-title" variant="h6" component="h2">
+              Search Box
             </Typography>
-            <List>
-              {chatResults.length > 0 ? (
-                chatResults.map((item, index) => (
-                  <ListItem
-                    key={index}
-                    button
-                    onClick={() => {
-                      if (item.agentId !== "empty") {
-                        setSelectedConvo({ conversation: item });
-                        handleClose();
-                      }
+            <Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent={"center"}
+                alignItems={"center"}
+              >
+                {
+                  <TextField
+                    id="filled-search"
+                    label="Search"
+                    type="search"
+                    variant="filled"
+                    size={"small"}
+                    value={searchText}
+                    sx={{
+                      width: "70%",
+                    }}
+                    onChange={(e) => {
+                      setSearchText(e.target.value);
+                    }}
+                  />
+                }
+                <Button
+                  variant="contained"
+                  sx={{
+                    ml: 2,
+                  }}
+                  onClick={() => {
+                    handleSearch();
+                  }}
+                >
+                  Search
+                </Button>
+              </Box>
+
+              {showResults ? (
+                <>
+                  <Grid
+                    container
+                    spacing={0}
+                    direction="column"
+                    justifyContent="flex-start"
+                    sx={{
+                      height: "100%",
                     }}
                   >
-                    <ListItemText primary={isAgent ? item.custId : item.agentId} />
-                  </ListItem>
-                ))
-              ) : (
-                <ListItem>
-                  <ListItemText primary="No Results" />
-                </ListItem>
-              )}
-            </List>
+                    <Grid item>
+                      <Box
+                        borderBottom="1px solid #ccc"
+                        marginTop={1}
+                        padding="8px"
+                      >
+                        <Typography variant="h7">Chat</Typography>
+                      </Box>
+                      {chatResults.length !== 0 ? (
+                        <>
+                          {chatResults.map((item, index) => (
+                            <>
+                              <Box
+                                sx={{
+                                  "&:hover": {
+                                    backgroundColor: "#e1e1e18f",
+                                  },
+                                }}
+                                onClick={() => {
+                                  // console.log("item",{userData:item})
+                                  if (item.agentId === "empty") {
+                                    //   handleClickOpenDia()
+                                  } else {
+                                    setSelectedConvo({ conversation: item });
+                                    handleClose();
+                                  }
+                                }}
+                              >
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    ml: 1,
+                                    mt: 2,
+                                  }}
+                                >
+                                  {isAgent ? item.custId : item.agentId}
+                                </Typography>
+                              </Box>
+                            </>
+                          ))}
+                        </>
+                      ) : (
+                        <>
+                          <Typography variant="caption">No Results</Typography>
+                        </>
+                      )}
+                    </Grid>
 
-            <Divider sx={{ my: 2 }} />
+                    <Grid item>
+                      <Box
+                        borderBottom="1px solid #ccc"
+                        marginTop={1}
+                        padding="8px"
+                      >
+                        <Typography variant="h7">Messages</Typography>
+                      </Box>
+                      {messageResults.length !== 0 ? (
+                        <>
+                          {messageResults.map((item, index) => (
+                            <>
+                              <Box>
+                                <Typography>
+                                  {item.isAgent
+                                    ? item.conversationId.agentId
+                                    : item.conversationId.custId}
+                                </Typography>
 
-            <Typography variant="subtitle1" gutterBottom>
-              Message Results
-            </Typography>
-            <List>
-              {messageResults.length > 0 ? (
-                messageResults.map((item, index) => (
-                  <ListItem key={index}>
-                    <ListItemText
-                      primary={item.isAgent ? item.conversationId.agentId : item.conversationId.custId}
-                      secondary={item.text}
-                    />
-                  </ListItem>
-                ))
-              ) : (
-                <ListItem>
-                  <ListItemText primary="No Results" />
-                </ListItem>
-              )}
-            </List>
+                                <Typography variant="caption">
+                                  {item.text}
+                                </Typography>
+                              </Box>
+                            </>
+                          ))}
+                        </>
+                      ) : (
+                        <>
+                          <Typography variant="caption">No Results</Typography>
+                        </>
+                      )}
+                    </Grid>
+                  </Grid>
+                </>
+              ) : null}
+            </Box>
           </Box>
-        )}
-      </StyledPaper>
-    </Modal>
-  );
+        </Modal>
+      </>
+    );
 }
+export default SearchModal
 
-export default SearchModal;
-
+const style = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 400,
+    bgcolor: 'white',
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+};

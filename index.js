@@ -15,7 +15,7 @@ const io = require('socket.io')(http, {
 require('./socket')(io)
 const corsOptions ={
    origin:'*', 
-   credentials:true,            //access-control-allow-credentials:true
+   credentials:true,            
    optionSuccessStatus:200,
 }
 const conversationRoute = require("./routes/conversation");
